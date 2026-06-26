@@ -1,0 +1,1671 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#F7931A">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PortoFolio">
+<meta name="application-name" content="PortoFolio">
+<meta name="description" content="Pencatat portofolio investasi pribadi">
+<link rel="manifest" id="pwaManifest">
+<title>PortoFolio</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+/* ═══════════════════════════════════════
+   DESIGN TOKENS
+═══════════════════════════════════════ */
+:root {
+  --f:  -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --fm: 'SF Mono','Fira Code','Consolas',monospace;
+  --bg:     #07080c;
+  --s1:     #0f1420;
+  --s2:     #161b27;
+  --border: #1f2a3e;
+  --text:   #e8edf8;
+  --sub:    #6b7b9a;
+  --dim:    #3d4e68;
+  --gold:   #F7931A;
+  --green:  #27b870;
+  --red:    #e04f4f;
+  --tx-display: 24px;
+  --tx-large:   17px;
+  --tx-base:    13px;
+  --tx-small:   11px;
+  --tx-micro:   10px;
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --sp-1: 4px; --sp-2: 8px; --sp-3: 12px; --sp-4: 16px; --sp-5: 24px;
+  --nav-h: 64px;
+}
+*,*::before,*::after { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html { scroll-behavior:smooth; }
+body { font-family:var(--f); background:var(--bg); color:var(--text); font-size:var(--tx-base); line-height:1.5; overflow-x:hidden; min-height:100vh; }
+.wrap { max-width:480px; margin:0 auto; padding:var(--sp-4) var(--sp-4) calc(var(--nav-h) + var(--sp-5)); }
+.pos { color:var(--green); } .neg { color:var(--red); } .neu { color:var(--text); }
+.sec-label { font-size:var(--tx-micro); font-weight:600; color:var(--dim); text-transform:uppercase; letter-spacing:.1em; font-family:var(--fm); margin:0 0 var(--sp-2); }
+
+/* HEADER */
+.hdr { display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--sp-4); }
+.logo { font-size:16px; font-weight:800; letter-spacing:-.5px; }
+.logo b { color:var(--gold); }
+.hdr-right { display:flex; align-items:center; gap:var(--sp-2); }
+.hdr-date { font-size:var(--tx-micro); color:var(--dim); font-family:var(--fm); }
+.hdr-actions { display:flex; gap:var(--sp-1); }
+.hbtn { width:34px; height:34px; border-radius:var(--r-sm); background:var(--s1); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all .15s; color:var(--sub); flex-shrink:0; }
+.hbtn:active { background:var(--s2); transform:scale(.94); }
+
+/* HERO */
+.hero { background:var(--s1); border:1px solid var(--border); border-radius:var(--r-lg); padding:var(--sp-4); margin-bottom:var(--sp-3); position:relative; overflow:hidden; }
+.hero::after { content:''; position:absolute; top:-60px; right:-60px; width:180px; height:180px; border-radius:50%; background:radial-gradient(circle,rgba(247,147,26,.06),transparent 70%); pointer-events:none; }
+.hero-tag { font-size:var(--tx-micro); font-weight:600; color:var(--dim); text-transform:uppercase; letter-spacing:.1em; font-family:var(--fm); margin-bottom:var(--sp-1); }
+.hero-amt { font-size:var(--tx-display); font-weight:800; color:var(--gold); letter-spacing:-.8px; line-height:1.1; margin-bottom:2px; }
+.hero-sub { font-size:var(--tx-small); color:var(--sub); margin-bottom:var(--sp-3); }
+.hero-stats { display:grid; grid-template-columns:1fr 1fr; gap:var(--sp-3) 0; padding-top:var(--sp-3); border-top:1px solid var(--border); margin-bottom:var(--sp-3); }
+.hs { display:flex; flex-direction:column; gap:3px; }
+.hs-label { font-size:var(--tx-micro); color:var(--dim); }
+.hs-val { font-size:var(--tx-base); font-weight:700; letter-spacing:-.3px; }
+.rb-strip { display:grid; grid-template-columns:1fr 1fr 1fr; background:var(--s2); border:1px solid var(--border); border-radius:var(--r-sm); overflow:hidden; }
+.rb-item { padding:var(--sp-2) var(--sp-3); border-right:1px solid var(--border); display:flex; flex-direction:column; gap:3px; min-width:0; }
+.rb-item:last-child { border-right:none; }
+.rb-label { font-size:var(--tx-micro); color:var(--dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.rb-val { font-size:var(--tx-small); font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+/* BOTTOM NAV */
+.bnav { position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:480px; height:var(--nav-h); background:rgba(9,12,18,.96); backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px); border-top:1px solid var(--border); display:flex; align-items:flex-end; justify-content:space-around; padding:0 var(--sp-1) var(--sp-3); padding-bottom:max(var(--sp-3), env(safe-area-inset-bottom)); z-index:100; overflow:visible; }
+.ntab { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; padding:0 var(--sp-1); gap:3px; cursor:pointer; border:none; background:transparent; color:var(--dim); font-family:var(--f); transition:color .18s; position:relative; }
+.ntab.active { color:var(--gold); }
+.ntab-icon { width:22px; height:22px; display:flex; align-items:center; justify-content:center; transition:transform .18s; }
+.ntab-icon svg { width:100%; height:100%; }
+.ntab.active .ntab-icon { transform:scale(1.1); }
+.ntab-label { font-size:var(--tx-micro); font-weight:600; letter-spacing:.02em; line-height:1; }
+.ntab.active::after { content:''; position:absolute; top:-6px; width:4px; height:4px; border-radius:50%; background:var(--gold); }
+.fab { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; padding:0 var(--sp-1); gap:3px; cursor:pointer; border:none; background:transparent; font-family:var(--f); position:relative; }
+.fab-circle { width:30px; height:30px; border-radius:var(--r-sm); background:var(--s2); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; transition:all .15s; }
+.fab-circle svg { width:14px; height:14px; stroke:var(--dim); transition:stroke .15s; }
+.fab-label { font-size:var(--tx-micro); font-weight:600; color:var(--dim); letter-spacing:.02em; line-height:1; transition:color .15s; }
+.fab.active .fab-circle { background:var(--gold); border-color:transparent; box-shadow:0 2px 12px rgba(247,147,26,.3); }
+.fab.active .fab-circle svg { stroke:#07080c; }
+.fab.active .fab-label { color:var(--gold); }
+.fab.active::after { content:''; position:absolute; top:-6px; width:4px; height:4px; border-radius:50%; background:var(--gold); }
+.fab:active .fab-circle { transform:scale(.9); }
+
+/* SECTIONS */
+.sec { display:none; }
+.sec.active { display:block; animation:up .22s ease; }
+@keyframes up { from{opacity:0;transform:translateY(5px)} to{opacity:1;transform:none} }
+
+/* INSTRUMENT CARDS */
+.icards-grid { display:grid; grid-template-columns:1fr 1fr; gap:var(--sp-2); margin-bottom:var(--sp-3); }
+.ic { background:var(--s1); border:1px solid var(--border); border-radius:var(--r-md); padding:var(--sp-3); display:flex; flex-direction:column; }
+.ic-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--sp-2); }
+.ic-icon { width:28px; height:28px; border-radius:var(--r-sm); display:flex; align-items:center; justify-content:center; }
+.ic-icon svg { width:13px; height:13px; }
+.ic-pct { font-size:var(--tx-micro); font-family:var(--fm); color:var(--sub); }
+.ic-name { font-size:var(--tx-micro); font-weight:600; color:var(--sub); text-transform:uppercase; letter-spacing:.06em; margin-bottom:var(--sp-1); }
+.ic-val { font-size:var(--tx-large); font-weight:800; color:var(--text); letter-spacing:-.5px; line-height:1.2; flex:1; }
+.ic-footer { display:flex; align-items:center; justify-content:space-between; padding-top:var(--sp-2); margin-top:var(--sp-2); border-top:1px solid var(--border); }
+.ic-contrib { font-size:var(--tx-micro); color:var(--dim); font-family:var(--fm); }
+.ic-mom { font-size:var(--tx-micro); font-family:var(--fm); font-weight:600; }
+
+/* CHART CARD */
+.cc { background:var(--s1); border:1px solid var(--border); border-radius:var(--r-md); padding:var(--sp-4); margin-bottom:var(--sp-2); }
+.cc-hdr { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:var(--sp-3); }
+.cc-title { font-size:var(--tx-base); font-weight:700; }
+.cc-sub { font-size:var(--tx-small); color:var(--dim); margin-top:2px; }
+.chart-toggle { display:flex; align-items:center; justify-content:center; gap:var(--sp-1); padding:var(--sp-2) var(--sp-3); margin-bottom:var(--sp-2); cursor:pointer; color:var(--sub); font-size:var(--tx-small); border:1px solid var(--border); border-radius:var(--r-sm); background:var(--s1); }
+.chart-toggle svg { width:12px; height:12px; stroke:var(--sub); transition:transform .25s; }
+.chart-toggle.open svg { transform:rotate(180deg); }
+.chart-extra { overflow:hidden; transition:max-height .3s ease; max-height:0; }
+.chart-extra.open { max-height:2000px; }
+
+/* EMPTY STATE */
+.empty-state { display:flex; flex-direction:column; align-items:center; padding:var(--sp-5) var(--sp-4); gap:var(--sp-3); text-align:center; }
+.empty-state-icon { width:52px; height:52px; border-radius:var(--r-md); background:var(--s2); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; }
+.empty-state-icon svg { width:24px; height:24px; stroke:var(--sub); }
+.empty-state-title { font-size:var(--tx-large); font-weight:700; }
+.empty-state-sub { font-size:var(--tx-small); color:var(--sub); line-height:1.7; max-width:220px; }
+.empty-state-btn { background:var(--gold); color:#07080c; border:none; border-radius:var(--r-sm); padding:var(--sp-3) var(--sp-5); font-family:var(--f); font-weight:700; font-size:var(--tx-base); cursor:pointer; margin-top:var(--sp-1); }
+
+/* PER BULAN */
+.msel-row { display:flex; align-items:center; gap:var(--sp-2); margin-bottom:var(--sp-3); }
+.mnav { width:34px; height:34px; border-radius:var(--r-sm); background:var(--s1); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; transition:all .15s; }
+.mnav svg { width:13px; height:13px; stroke:var(--sub); }
+.mnav:active { border-color:var(--sub); }
+.mnav:disabled { opacity:.25; cursor:default; }
+.dpills { display:grid; grid-template-columns:1fr 1fr; gap:var(--sp-2); margin-bottom:var(--sp-2); }
+.dp { background:var(--s1); border:1px solid var(--border); border-radius:var(--r-md); padding:var(--sp-3); }
+.dp-lbl { font-size:var(--tx-micro); color:var(--dim); text-transform:uppercase; letter-spacing:.07em; font-family:var(--fm); margin-bottom:var(--sp-1); }
+.dp-val { font-size:var(--tx-large); font-weight:700; letter-spacing:-.4px; }
+.dp-wide { grid-column:1/-1; }
+.dtw { background:var(--s1); border:1px solid var(--border); border-radius:var(--r-md); overflow:hidden; margin-bottom:var(--sp-2); }
+
+/* FORM */
+.fc { background:var(--s1); border:1px solid var(--border); border-radius:var(--r-lg); padding:var(--sp-4); margin-bottom:var(--sp-3); }
+.fc-title { font-size:var(--tx-large); font-weight:700; letter-spacing:-.3px; margin-bottom:4px; }
+.fc-sub { font-size:var(--tx-small); color:var(--sub); margin-bottom:var(--sp-4); line-height:1.65; }
+.field { display:flex; flex-direction:column; gap:var(--sp-1); margin-bottom:var(--sp-3); }
+.field label { font-size:var(--tx-micro); font-weight:600; color:var(--sub); font-family:var(--fm); text-transform:uppercase; letter-spacing:.08em; }
+input, select { background:var(--s2); border:1px solid var(--border); border-radius:var(--r-sm); color:var(--text); padding:11px var(--sp-3); font-family:var(--f); font-size:var(--tx-base); outline:none; width:100%; transition:border-color .15s; appearance:none; -webkit-appearance:none; }
+input:focus, select:focus { border-color:rgba(247,147,26,.5); }
+input::placeholder { color:var(--dim); }
+input.err { border-color:var(--red); }
+select option { background:var(--s2); }
+.sep { font-size:var(--tx-micro); font-weight:600; color:var(--dim); text-transform:uppercase; letter-spacing:.1em; font-family:var(--fm); margin:var(--sp-4) 0 var(--sp-3); padding-bottom:var(--sp-2); border-bottom:1px solid var(--border); }
+.inst-block { margin-bottom:var(--sp-2); border:1px solid var(--border); border-radius:var(--r-md); overflow:hidden; }
+.inst-block-hdr { display:flex; align-items:center; gap:var(--sp-2); padding:var(--sp-2) var(--sp-3); background:var(--s2); border-bottom:1px solid var(--border); }
+.inst-block-icon { flex-shrink:0; }
+.inst-block-name { font-size:var(--tx-small); font-weight:600; flex:1; }
+.inst-cols { display:flex; flex-direction:column; gap:var(--sp-2); padding:var(--sp-3); }
+.inst-inputs-row { display:grid; grid-template-columns:1fr 16px 1fr; align-items:end; gap:var(--sp-1); }
+.inst-op { text-align:center; font-size:var(--tx-small); font-weight:600; color:var(--dim); padding-bottom:11px; }
+.inst-field { display:flex; flex-direction:column; gap:3px; }
+.inst-field label { font-size:var(--tx-micro); color:var(--dim); font-family:var(--fm); text-transform:uppercase; letter-spacing:.06em; }
+.inst-field input { padding:10px var(--sp-2); font-size:var(--tx-base); text-align:right; border-radius:var(--r-sm); width:100%; }
+.inst-field input:focus { border-color:rgba(247,147,26,.5); }
+.inst-akhir-row { display:flex; align-items:center; gap:var(--sp-2); padding-top:var(--sp-2); border-top:1px solid var(--border); }
+.inst-akhir-lbl { font-size:var(--tx-micro); color:var(--dim); flex-shrink:0; font-family:var(--fm); text-transform:uppercase; letter-spacing:.06em; }
+.inst-akhir-box { flex:1; padding:9px var(--sp-3); font-size:var(--tx-large); font-weight:800; color:var(--gold); text-align:right; font-family:var(--fm); letter-spacing:-.3px; }
+.autofill-badge { display:none; font-size:var(--tx-micro); color:var(--dim); font-family:var(--fm); background:var(--s2); border-radius:4px; padding:1px var(--sp-1); margin-top:2px; }
+.inst-field.was-autofilled .autofill-badge { display:block; color:var(--gold); }
+.ehint { font-size:var(--tx-small); color:var(--red); font-family:var(--fm); display:none; margin-top:var(--sp-1); }
+.ehint.show { display:block; }
+.btn-row { display:flex; gap:var(--sp-2); margin-top:var(--sp-4); }
+.btn { background:var(--gold); color:#07080c; border:none; border-radius:var(--r-sm); padding:13px; font-family:var(--f); font-weight:700; font-size:var(--tx-base); cursor:pointer; flex:1; transition:opacity .15s, transform .1s; }
+.btn:active { opacity:.8; transform:scale(.97); }
+.btn-g { background:transparent; border:1px solid var(--border); color:var(--sub); border-radius:var(--r-sm); padding:12px; font-family:var(--f); font-size:var(--tx-base); font-weight:600; cursor:pointer; flex:1; transition:all .15s; }
+.btn-g:active { border-color:var(--sub); color:var(--text); }
+/* fPreview style ada di inline HTML */
+
+/* RIWAYAT */
+.rv-card { background:var(--s1); border:1px solid var(--border); border-radius:var(--r-md); padding:var(--sp-3); margin-bottom:var(--sp-2); }
+.rv-card.rv-latest { border-color:var(--border); }
+.rv-top { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:var(--sp-2); }
+.rv-bulan { font-size:var(--tx-base); font-weight:700; letter-spacing:-.2px; }
+.rv-label { font-size:var(--tx-micro); color:var(--dim); margin-top:2px; }
+.rv-total { font-size:var(--tx-large); font-weight:800; color:var(--text); letter-spacing:-.4px; text-align:right; }
+.rv-mom { font-size:var(--tx-small); text-align:right; margin-top:2px; }
+.rv-pills { display:flex; flex-wrap:wrap; gap:var(--sp-1); margin-bottom:var(--sp-2); }
+.rv-pill { display:flex; align-items:center; gap:var(--sp-1); padding:4px var(--sp-2); background:var(--s2); border-radius:6px; }
+.rv-pill-icon { display:flex; align-items:center; }
+.rv-pill-val { font-size:var(--tx-small); font-weight:600; font-family:var(--fm); color:var(--text); }
+.rv-bottom { display:flex; align-items:center; justify-content:space-between; padding-top:var(--sp-2); border-top:1px solid var(--border); }
+.rv-meta { font-size:var(--tx-small); color:var(--sub); display:flex; gap:var(--sp-3); }
+.rv-meta span { display:flex; align-items:center; gap:3px; }
+.bdel { background:transparent; border:1px solid var(--border); color:var(--dim); border-radius:6px; padding:5px var(--sp-2); font-size:var(--tx-micro); cursor:pointer; font-family:var(--fm); transition:all .15s; }
+.bdel:active, .bdel.confirm { border-color:var(--red); color:var(--red); }
+
+/* BACKUP */
+.data-actions { background:var(--s1); border:1px solid var(--border); border-radius:var(--r-md); padding:var(--sp-3); margin-bottom:var(--sp-3); }
+.da-title { font-size:var(--tx-base); font-weight:700; margin-bottom:3px; }
+.da-sub { font-size:var(--tx-small); color:var(--sub); margin-bottom:var(--sp-3); line-height:1.6; }
+.da-row { display:flex; gap:var(--sp-2); }
+.da-btn { flex:1; display:flex; align-items:center; justify-content:center; gap:var(--sp-1); padding:11px var(--sp-2); border-radius:var(--r-sm); font-size:var(--tx-small); font-weight:600; cursor:pointer; border:1px solid var(--border); background:var(--s2); color:var(--sub); font-family:var(--f); transition:all .15s; }
+.da-btn:active { border-color:var(--sub); color:var(--text); transform:scale(.97); }
+#fileInput { display:none; }
+
+/* INST MANAGER */
+.inst-mgr-card { background:var(--s1); border:1px solid var(--border); border-radius:var(--r-md); padding:var(--sp-3); margin-bottom:var(--sp-3); }
+.inst-mgr-hdr { display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--sp-3); }
+.inst-mgr-title { font-size:var(--tx-base); font-weight:700; }
+.btn-add-inst { display:flex; align-items:center; gap:var(--sp-1); background:transparent; border:1px solid var(--border); color:var(--sub); border-radius:var(--r-sm); padding:6px 10px; font-size:var(--tx-small); font-weight:600; cursor:pointer; font-family:var(--f); transition:all .15s; }
+.btn-add-inst:active { border-color:var(--gold); color:var(--gold); }
+.inst-mgr-row { display:flex; align-items:center; gap:var(--sp-2); padding:var(--sp-2) 0; border-bottom:1px solid var(--border); }
+.inst-mgr-row:last-child { border-bottom:none; padding-bottom:0; }
+.inst-mgr-icon { width:28px; height:28px; border-radius:var(--r-sm); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.inst-mgr-icon svg { width:13px; height:13px; }
+.inst-mgr-name { flex:1; font-size:var(--tx-base); font-weight:600; }
+.inst-mgr-del { background:transparent; border:1px solid var(--border); color:var(--dim); border-radius:6px; padding:5px var(--sp-2); font-size:var(--tx-micro); cursor:pointer; font-family:var(--fm); transition:all .15s; }
+.inst-mgr-del.confirm { border-color:var(--red); color:var(--red); }
+
+/* MODAL */
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.65); z-index:200; display:none; align-items:flex-end; justify-content:center; }
+.modal-overlay.open { display:flex; }
+.modal-sheet { background:var(--s1); border-radius:var(--r-lg) var(--r-lg) 0 0; border:1px solid var(--border); border-bottom:none; padding:var(--sp-4) var(--sp-4) calc(var(--sp-5) + env(safe-area-inset-bottom, 0px)); width:100%; max-width:480px; max-height:90vh; overflow-y:auto; animation:slideUp .22s ease; }
+@keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+.modal-sheet-hdr { display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--sp-4); }
+.modal-sheet-title { font-size:var(--tx-large); font-weight:700; }
+.modal-close { width:28px; height:28px; border-radius:var(--r-sm); background:var(--s2); border:1px solid var(--border); color:var(--sub); cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:13px; }
+.color-grid { display:flex; flex-wrap:wrap; gap:var(--sp-2); margin-top:var(--sp-1); }
+.color-swatch { width:28px; height:28px; border-radius:var(--r-sm); cursor:pointer; border:2px solid transparent; transition:transform .1s; }
+.color-swatch.sel { border-color:#fff; transform:scale(1.15); }
+.icon-grid { display:flex; flex-wrap:wrap; gap:var(--sp-2); margin-top:var(--sp-1); }
+.icon-opt { width:40px; height:40px; border-radius:var(--r-sm); background:var(--s2); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all .15s; }
+.icon-opt svg { width:16px; height:16px; stroke:var(--sub); }
+.icon-opt.sel { border-color:var(--gold); }
+.icon-opt.sel svg { stroke:var(--gold); }
+
+/* TOAST */
+.toast { position:fixed; bottom:calc(var(--nav-h) + var(--sp-2)); left:50%; transform:translateX(-50%) translateY(12px); background:var(--s1); border:1px solid var(--border); color:var(--text); padding:10px var(--sp-4); border-radius:20px; font-family:var(--fm); font-size:var(--tx-small); font-weight:500; opacity:0; transition:all .25s cubic-bezier(.34,1.56,.64,1); z-index:999; white-space:nowrap; box-shadow:0 4px 20px rgba(0,0,0,.5); pointer-events:none; }
+.toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+.toast.err { border-color:var(--red); color:var(--red); }
+.toast.info { border-color:var(--gold); color:var(--gold); }
+
+/* FALLBACK EMPTY */
+.empty { display:flex; flex-direction:column; align-items:center; padding:40px var(--sp-4); gap:var(--sp-2); }
+.empty-icon { font-size:1.8rem; opacity:.25; }
+.empty-txt { font-size:var(--tx-small); color:var(--sub); text-align:center; line-height:1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="logo">Porto<b>Folio</b></div>
+  <div class="hdr-right">
+    <div class="hdr-date" id="hDate"></div>
+    <div class="hdr-actions">
+      <button class="hbtn" id="btnInstall" onclick="installPWA()" title="Pasang ke HP" style="display:none;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2v13M8 11l4 4 4-4"/><path d="M20 17v2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2"/>
+        </svg>
+      </button>
+      <button class="hbtn" onclick="shareWA()" title="Bagikan ke WhatsApp" style="color:#25D366;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/>
+        </svg>
+      </button>
+      <button class="hbtn" onclick="exportData()" title="Export data">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+      </button>
+      <label class="hbtn" title="Import data" style="cursor:pointer;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+        <input type="file" id="fileInput" accept=".json" onchange="importData(event)">
+      </label>
+    </div>
+  </div>
+</div>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-tag">Total Portofolio</div>
+  <div class="hero-amt" id="hAmt">—</div>
+  <div class="hero-sub" id="hSub"></div>
+
+  <div class="hero-stats">
+    <div class="hs">
+      <div class="hs-label" id="hAwalLabel">Modal Awal</div>
+      <div class="hs-val neu" id="hAwal">—</div>
+    </div>
+    <div class="hs"><div class="hs-label">Naik/Turun</div><div class="hs-val" id="hGrowth">—</div></div>
+    <div class="hs"><div class="hs-label">Total Return</div><div class="hs-val" id="hReturn">—</div></div>
+    <div class="hs"><div class="hs-label">Durasi</div><div class="hs-val neu" id="hCount">—</div></div>
+  </div>
+
+  <div class="rb-strip">
+    <div class="rb-item">
+      <div class="rb-label">Total Setor</div>
+      <div class="rb-val neu" id="hSetor">—</div>
+    </div>
+    <div class="rb-item">
+      <div class="rb-label">Hasil Bersih</div>
+      <div class="rb-val" id="hRB">—</div>
+    </div>
+    <div class="rb-item">
+      <div class="rb-label">Return/Modal</div>
+      <div class="rb-val" id="hYield">—</div>
+    </div>
+  </div>
+
+  </div><!-- /hero -->
+
+<!-- ══ DASHBOARD ══ -->
+<div class="sec active" id="sec-dashboard">
+
+  <!-- Empty state -->
+  <div id="emptyDash" style="display:none;">
+    <div class="empty-state">
+      <div class="empty-state-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 3h18M3 9h18M9 21V9M15 21V9"/>
+        </svg>
+      </div>
+      <div class="empty-state-title">Portofolio Kosong</div>
+      <div class="empty-state-sub">Mulai catat aset investasimu dan pantau pertumbuhannya tiap bulan.</div>
+      <button class="empty-state-btn" onclick="sw('tambah', document.querySelector('.fab'))">+ Catat Bulan Ini</button>
+    </div>
+  </div>
+
+  <div id="dashContent">
+    <div class="sec-label">Instrumen</div>
+    <div class="icards-grid" id="icards"></div>
+
+    <div class="sec-label">Grafik</div>
+
+    <!-- 3 chart utama selalu tampil -->
+    <div class="cc">
+      <div class="cc-hdr"><div><div class="cc-title">Alokasi Terkini</div><div class="cc-sub" id="donutSub"></div></div></div>
+      <div style="height:200px;display:flex;align-items:center;justify-content:center;"><canvas id="cDonut"></canvas></div>
+    </div>
+    <div class="cc">
+      <div class="cc-hdr"><div><div class="cc-title">Pertumbuhan Portofolio</div><div class="cc-sub" id="lineChartSub">Histori</div></div></div>
+      <canvas id="cLine"></canvas>
+    </div>
+    <div class="cc">
+      <div class="cc-hdr"><div><div class="cc-title">Hasil Bulanan</div><div class="cc-sub">Hasil murni investasi</div></div></div>
+      <canvas id="cRB"></canvas>
+    </div>
+
+    <!-- Toggle chart lainnya -->
+    <div class="chart-toggle" id="chartToggle" onclick="toggleCharts()">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+      <span id="chartToggleLbl">Lihat 3 grafik lainnya</span>
+    </div>
+    <div class="chart-extra" id="chartExtra">
+      <div class="cc">
+        <div class="cc-hdr"><div><div class="cc-title">Nilai vs Total Setor</div><div class="cc-sub">Akumulasi bulanan</div></div></div>
+        <canvas id="cModal"></canvas>
+      </div>
+      <div class="cc">
+        <div class="cc-hdr"><div><div class="cc-title">Nilai per Instrumen</div><div class="cc-sub">Komposisi bulanan</div></div></div>
+        <canvas id="cStack"></canvas>
+      </div>
+      <div class="cc">
+        <div class="cc-hdr"><div><div class="cc-title">Porsi Aset (%)</div><div class="cc-sub">Porsi % tiap bulan</div></div></div>
+        <canvas id="cPct"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PER BULAN ══ -->
+<div class="sec" id="sec-bulanan">
+  <div class="msel-row">
+    <button class="mnav" id="mPrev" onclick="navBulan(-1)">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <select id="mSel" onchange="renderBulanan()" style="flex:1;"></select>
+    <button class="mnav" id="mNext" onclick="navBulan(1)">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+    </button>
+  </div>
+  <div id="mDetail"></div>
+</div>
+
+<!-- ══ TAMBAH ══ -->
+<div class="sec" id="sec-tambah">
+  <div class="fc">
+    <div class="fc-title">Catat Portofolio</div>
+    <div class="fc-sub">Akhir bulan: update <b>Saldo Awal</b> sesuai nilai terkini (naik/turun), isi <b>Dana Baru</b> jika ada. <b>Saldo Akhir</b> otomatis terhitung.</div>
+
+    <div class="field">
+      <label>Bulan <span style="color:var(--red)">*</span></label>
+      <input type="month" id="fBulan" onchange="autoFillAwal()">
+      <div class="ehint" id="eBulan">Pilih bulan dulu</div>
+    </div>
+    <div class="field">
+      <label>Label (opsional)</label>
+      <input type="text" id="fLabel" placeholder="e.g. gaji Mei 2026">
+    </div>
+
+    <div class="sep">Per Instrumen</div>
+    <!-- Instrument blocks generated by renderFormInst() -->
+    <div id="formInstBlocks"></div>
+
+    <div class="ehint" id="eInst" style="margin-top:8px;">⚠️ Isi minimal satu field dengan nilai lebih dari 0</div>
+
+    <!-- Live total preview -->
+    <div id="fPreview" style="margin-top:14px; background:rgba(247,147,26,.07); border:1px solid rgba(247,147,26,.2); border-radius:13px; padding:12px 14px;">
+      <div style="font-size:9px;color:var(--sub);margin-bottom:8px;text-transform:uppercase;letter-spacing:.08em;font-family:var(--fm)">Ringkasan</div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px;">
+        <span style="font-size:12px;color:var(--sub)">Total Saldo Akhir</span>
+        <span id="fPrevSaldo" style="font-size:18px;font-weight:800;color:var(--gold);letter-spacing:-.5px">Rp 0</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;padding-top:6px;border-top:1px solid rgba(247,147,26,.15);">
+        <span style="font-size:11px;color:var(--dim)">Total Dana Baru</span>
+        <span id="fPrevDana" style="font-size:12px;font-weight:600;color:var(--green)">Rp 0</span>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn" onclick="tambah()">Simpan</button>
+      <button class="btn-g" onclick="salinBulanLalu()">Salin Bln Lalu</button>
+      <button class="btn-g" style="flex:0 0 auto;padding:14px 12px;" onclick="resetForm()" title="Reset">✕</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ RIWAYAT ══ -->
+<div class="sec" id="sec-riwayat">
+  <!-- Instrument Manager -->
+  <div class="inst-mgr-card">
+    <div class="inst-mgr-hdr">
+      <div class="inst-mgr-title">Instrumen</div>
+      <button class="btn-add-inst" onclick="openAddInst()">
+        <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="7" y1="2" x2="7" y2="12"/><line x1="2" y1="7" x2="12" y2="7"/></svg>
+        Tambah
+      </button>
+    </div>
+    <div id="instMgrList"></div>
+  </div>
+
+  <!-- Export / Import card -->
+  <div class="data-actions">
+    <div class="da-title">Backup Data</div>
+    <div class="da-sub">Export untuk backup, import untuk restore dari file JSON. Data tersimpan lokal di browser ini.</div>
+    <div class="da-row">
+      <button class="da-btn" onclick="exportData()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Export JSON
+      </button>
+      <label class="da-btn" style="cursor:pointer;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Import JSON<input type="file" accept=".json" onchange="importData(event)" style="display:none;">
+      </label>
+    </div>
+  </div>
+
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+    <div class="sec-label" style="margin:0;">Semua Data</div>
+    <div style="font-size:11px;color:var(--dim);font-family:var(--fm)" id="rCount"></div>
+  </div>
+  <div id="rList"></div>
+  <div id="emptyRiwayat" class="empty" style="display:none;">
+    <div class="empty-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" style="width:28px;height:28px;opacity:.3"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="13" x2="12" y2="13"/></svg>
+    </div>
+    <div class="empty-txt">Belum ada data.</div>
+  </div>
+</div>
+
+</div><!-- /wrap -->
+
+<!-- Add Instrument Modal -->
+<div class="modal-overlay" id="addInstModal" onclick="if(event.target===this)closeAddInst()">
+  <div class="modal-sheet" onclick="event.stopPropagation()">
+    <div class="modal-sheet-hdr">
+      <div class="modal-sheet-title">Tambah Instrumen</div>
+      <button class="modal-close" onclick="closeAddInst()">✕</button>
+    </div>
+    <div class="field">
+      <label>Nama Instrumen *</label>
+      <input type="text" id="newInstName" placeholder="e.g. Obligasi, P2P, Properti" maxlength="20">
+    </div>
+    <div class="field">
+      <label>Warna</label>
+      <div class="color-grid" id="colorGrid"></div>
+    </div>
+    <div class="field">
+      <label>Ikon</label>
+      <div class="icon-grid" id="iconGrid"></div>
+    </div>
+    <button class="btn" style="width:100%;margin-top:8px;" onclick="confirmAddInst()">Tambah</button>
+  </div>
+</div>
+
+<!-- Bottom Nav -->
+<nav class="bnav">
+  <button class="ntab active" id="ntab-dashboard" onclick="sw('dashboard',this)">
+    <span class="ntab-icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="13" width="4" height="8" rx="1"/><rect x="10" y="8" width="4" height="13" rx="1"/><rect x="17" y="3" width="4" height="18" rx="1"/>
+      </svg>
+    </span>
+    <span class="ntab-label">Dashboard</span>
+  </button>
+  <button class="ntab" id="ntab-bulanan" onclick="sw('bulanan',this)">
+    <span class="ntab-icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+        <circle cx="8" cy="15" r="1" fill="currentColor"/><circle cx="12" cy="15" r="1" fill="currentColor"/>
+      </svg>
+    </span>
+    <span class="ntab-label">Per Bulan</span>
+  </button>
+  <button class="fab" onclick="sw('tambah', document.getElementById('ntab-tambah'))">
+    <div class="fab-circle">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <line x1="7" y1="2" x2="7" y2="12"/><line x1="2" y1="7" x2="12" y2="7"/>
+      </svg>
+    </div>
+    <span class="fab-label">Tambah</span>
+  </button>
+  <button class="ntab" id="ntab-tambah" onclick="sw('tambah',this)" style="display:none;"></button>
+  <button class="ntab" id="ntab-riwayat" onclick="sw('riwayat',this)">
+    <span class="ntab-icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/>
+      </svg>
+    </span>
+    <span class="ntab-label">Riwayat</span>
+  </button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ══ DATA ══ */
+const KEY = 'pf_v8';
+/* ══ INSTRUMENT CONFIG ══ */
+const INST_KEY = 'pf_inst';
+
+const ICON_PRESETS = {
+  wallet:   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M22 10H2M7 15h2M15 15h2"/></svg>`,
+  bank:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="22" x2="21" y2="22"/><line x1="6" y1="18" x2="6" y2="11"/><line x1="10" y1="18" x2="10" y2="11"/><line x1="14" y1="18" x2="14" y2="11"/><line x1="18" y1="18" x2="18" y2="11"/><polygon points="12 2 2 7 22 7"/></svg>`,
+  chart:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>`,
+  star:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
+  bitcoin:  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 8h5a2 2 0 0 1 0 4H9m0 0h6a2 2 0 0 1 0 4H9"/><line x1="9" y1="6" x2="9" y2="20"/><line x1="13" y1="6" x2="13" y2="8"/><line x1="13" y1="16" x2="13" y2="20"/></svg>`,
+  property: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg>`,
+  globe:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`,
+  diamond:  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"/><line x1="12" y1="2" x2="12" y2="22"/><path d="M2 8.5h20M2 15.5h20"/></svg>`,
+};
+const COLOR_PRESETS = ['#4d9ef5','#2ec97a','#26cdc2','#F7931A','#a46ff0','#e85555','#f7c59f','#64dfdf','#ffd166','#ef476f'];
+
+function mkInst(id) {
+  return { dA:`${id}Awal`, dT:`${id}Tambah`, dK:`${id}Akhir`, fA:`awal_${id}`, fT:`tambah_${id}`, fK:`akhir_${id}` };
+}
+
+const DEFAULT_INST = [
+  {id:'cash',  name:'Cash',       color:'#4d9ef5', iconKey:'wallet',  ...mkInst('cash')},
+  {id:'rdpu',  name:'RDPU/Dep',   color:'#2ec97a', iconKey:'bank',    ...mkInst('rdpu')},
+  {id:'saham', name:'Saham',      color:'#26cdc2', iconKey:'chart',   ...mkInst('saham')},
+  {id:'emas',  name:'Emas',       color:'#F7931A', iconKey:'star',    ...mkInst('emas')},
+  {id:'usd',   name:'USD/Kripto', color:'#a46ff0', iconKey:'bitcoin', ...mkInst('usd')},
+];
+
+let INST = [];
+function loadInst() {
+  const s = localStorage.getItem(INST_KEY);
+  const raw = s ? JSON.parse(s) : DEFAULT_INST;
+  INST = raw.map(i => ({ ...i, svg: ICON_PRESETS[i.iconKey] || ICON_PRESETS.wallet, ...mkInst(i.id) }));
+}
+function saveInst() {
+  localStorage.setItem(INST_KEY, JSON.stringify(INST.map(i => ({id:i.id, name:i.name, color:i.color, iconKey:i.iconKey}))));
+}
+
+const SEED = [];
+
+let db = [];
+function load() {
+  loadInst();
+  const s = localStorage.getItem(KEY);
+  db = s ? JSON.parse(s) : SEED.map(d=>({...d}));
+  if (!s) save();
+}
+function save() { localStorage.setItem(KEY, JSON.stringify(db)); }
+
+/* ══ UTILS ══ */
+// totAkhir = total nilai portofolio (saldo akhir semua instrumen)
+// totTambah = total kontribusi bulan ini
+// totAwal   = total saldo awal bulan ini
+const totAkhir  = d => INST.reduce((s,i)=>s+(d[i.dK]||0),0);
+const totTambah = d => INST.reduce((s,i)=>s+(d[i.dT]||0),0);
+const totAwal   = d => INST.reduce((s,i)=>s+(d[i.dA]||0),0);
+const tot  = totAkhir;   // alias untuk kompatibilitas chart
+const totM = totTambah;  // alias untuk kompatibilitas chart
+const asc  = () => [...db].sort((a,b)=>a.bulan.localeCompare(b.bulan));
+const pct  = (v,t) => t>0 ? +(v/t*100).toFixed(1) : 0;
+
+function fRp(n, short=false) {
+  if (n===null||n===undefined) return '—';
+  const a=Math.abs(n), s=n<0?'-':'';
+  if(a>=1e9) return s+'Rp '+(a/1e9).toFixed(2)+' M';
+  if(a>=1e6) return s+'Rp '+(short ? (a/1e6).toFixed(1) : (a/1e6).toFixed(2))+' jt';
+  if(a>=1e3) return s+'Rp '+(a/1e3).toFixed(0)+' rb';
+  return s+'Rp '+a.toLocaleString('id-ID');
+}
+function fRpFull(n) {
+  if (n===null||n===undefined) return '—';
+  const s = n<0?'-':'';
+  return s+'Rp '+Math.round(Math.abs(n)).toLocaleString('id-ID');
+}
+function fBul(b, sh=false) {
+  if (!b) return '—';
+  return new Date(b+'-01').toLocaleDateString('id-ID',
+    sh ? {month:'short',year:'2-digit'} : {month:'long',year:'numeric'});
+}
+
+/* ══ SHARE WHATSAPP ══ */
+function shareWA() {
+  const s = asc();
+  if (!s.length) { showToast('Belum ada data untuk dibagikan','err'); return; }
+
+  const lat  = s[s.length-1], fst = s[0];
+  const prev = s.length > 1 ? s[s.length-2] : null;
+  const lv   = totAkhir(lat), fv = totAkhir(fst);
+
+  // === Kalkulasi keseluruhan ===
+  const gr       = lv - fv;
+  const re       = fv > 0 ? gr/fv*100 : 0;
+  const cumSetor = s.reduce((a,d)=>a+totTambah(d), 0);
+  const rb       = lv - totAwal(fst) - cumSetor;
+  const roi      = cumSetor > 0 ? rb/cumSetor*100 : 0;
+  // Rata-rata return bulanan
+  const avgMom   = s.length > 1
+    ? s.slice(1).reduce((a,d,i) => {
+        const p = totAkhir(s[i]), c = totAkhir(d);
+        return a + (p>0?(c-p)/p*100:0);
+      }, 0) / (s.length-1)
+    : 0;
+  // Bulan terbaik & terburuk
+  let bestMonth = null, worstMonth = null;
+  s.forEach((d,i) => {
+    if(i===0) return;
+    const p = totAkhir(s[i-1]), c = totAkhir(d);
+    const chP = p>0?(c-p)/p*100:0;
+    if(!bestMonth || chP > bestMonth.pct) bestMonth = {bul:d.bulan, pct:chP};
+    if(!worstMonth || chP < worstMonth.pct) worstMonth = {bul:d.bulan, pct:chP};
+  });
+  // Streak naik
+  let streak = 0;
+  for(let i=s.length-1; i>0; i--) {
+    if(totAkhir(s[i]) > totAkhir(s[i-1])) streak++; else break;
+  }
+
+  // === Bulan ini ===
+  const prevLv   = prev ? totAkhir(prev) : null;
+  const mom      = prevLv !== null ? lv - prevLv : null;
+  const momP     = prevLv && prevLv > 0 ? (lv-prevLv)/prevLv*100 : null;
+  const setor    = totTambah(lat);
+  const hasilBln = mom !== null ? mom - setor : null;
+  // Saldo awal bulan ini (dari data awal instrumen)
+  const saldoAwalBln = totAwal(lat);
+
+  // === Instrumen aktif ===
+  const activeInst = INST.filter(i => (lat[i.dK]||0) > 0 || (prev&&(prev[i.dK]||0)>0));
+
+  // Terbaik & terburuk instrumen (MoM)
+  let best = null, worst = null;
+  if (prev) {
+    const chgs = activeInst.map(i=>({
+      name:i.name,
+      v:lat[i.dK]||0, pv:prev[i.dK]||0,
+      ch:(lat[i.dK]||0)-(prev[i.dK]||0),
+    })).filter(x=>x.pv>0);
+    if(chgs.length) {
+      chgs.sort((a,b)=>(b.ch/b.pv)-(a.ch/a.pv));
+      best=chgs[0]; worst=chgs[chgs.length-1];
+    }
+  }
+
+  // === Tren 3 bulan terakhir ===
+  const recent = s.slice(-3);
+  const trendLines = recent.length > 1 ? recent.map((d,i)=>{
+    if(i===0) return null;
+    const p=totAkhir(recent[i-1]), c=totAkhir(d);
+    const chP = p>0?(c-p)/p*100:0;
+    return `  ${fBul(d.bulan,true)}: ${c>=p?'▲':'▼'}${Math.abs(chP).toFixed(1)}% → ${fRp(c,true)}`;
+  }).filter(Boolean) : [];
+
+  const tgl = new Date().toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
+  const LINE = '─────────────────';
+  let t = '';
+
+  // Header
+  t += `📊 *PORTOFOLIO — ${fBul(lat.bulan).toUpperCase()}*\n`;
+  t += `_per ${tgl}_\n`;
+  t += `${LINE}\n\n`;
+
+  // Total + highlight
+  t += `💰 *Total Nilai: ${fRpFull(lv)}*\n`;
+  if(mom!==null) t += `${mom>=0?'📈':'📉'} Vs bln lalu: *${mom>=0?'+':''}${fRpFull(mom)}* (${momP!==null?(mom>=0?'+':'')+momP.toFixed(2)+'%':'—'})\n`;
+  if(hasilBln!==null) t += `Hasil bersih bln ini (tanpa setoran): ${hasilBln===0?'—':(hasilBln>=0?'+':'')+fRpFull(hasilBln)}\n`;
+  if(streak>1) t += `🔥 Naik ${streak} bulan berturut-turut\n`;
+  t += `\n`;
+
+  // Breakdown per instrumen — diurutkan dari nilai terbesar
+  if(activeInst.length) {
+    t += `*📦 PER INSTRUMEN*\n`;
+    const sortedInst = [...activeInst].sort((a,b) => (lat[b.dK]||0)-(lat[a.dK]||0));
+    sortedInst.forEach(i => {
+      const v=lat[i.dK]||0, tm=lat[i.dT]||0;
+      const pv=prev?prev[i.dK]||0:null;
+      const persen = (lv>0 ? v/lv*100 : 0).toFixed(1);
+      let line = `  ${i.name}: ${fRpFull(v)} (${persen}%)`;
+      if(pv!==null && pv>0) {
+        const chP=(v-pv)/pv*100;
+        line += ` ${v>=pv?'▲':'▼'}${Math.abs(chP).toFixed(1)}%`;
+      }
+      t += line + '\n';
+      if(tm>0) t += `    + Dana masuk: ${fRpFull(tm)}\n`;
+    });
+    t += `\n`;
+  }
+
+  t += `${LINE}\n`;
+  t += `_Dibagikan dari PortoFolio App_`;
+
+  window.open(`https://wa.me/?text=${encodeURIComponent(t)}`, '_blank');
+  showToast('Membuka WhatsApp...','info');
+}
+function exportData() {
+  const s = asc();
+  if (!s.length) { showToast('Tidak ada data untuk diekspor','err'); return; }
+  const instRaw = INST.map(i => ({id:i.id, name:i.name, color:i.color, iconKey:i.iconKey}));
+  const payload = { _app:'portofolio', _ver:8, _exported:new Date().toISOString(), inst:instRaw, data:s };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `portofolio-backup-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('⬇️ Berhasil diunduh','info');
+}
+
+function importData(evt) {
+  const file = evt.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const parsed = JSON.parse(e.target.result);
+      const incoming = Array.isArray(parsed) ? parsed : (parsed.data || null);
+      if (!incoming || !Array.isArray(incoming)) throw new Error('Format tidak dikenal');
+      if (!incoming.length) throw new Error('Data kosong');
+      if (!incoming[0].bulan) throw new Error('Data tidak valid');
+
+      // Restore INST jika ada di backup
+      if (parsed.inst && Array.isArray(parsed.inst) && parsed.inst.length) {
+        localStorage.setItem(INST_KEY, JSON.stringify(parsed.inst));
+        loadInst();
+        renderFormInst();
+      }
+
+      // Merge data
+      incoming.forEach(d => {
+        const idx = db.findIndex(x => x.bulan === d.bulan);
+        if (idx >= 0) db[idx] = d; else db.push(d);
+      });
+      save();
+      showToast(`✓ ${incoming.length} entri diimport`,'info');
+      renderDashboard(); renderRiwayat();
+      if(document.getElementById('sec-bulanan').classList.contains('active')){populateMSel();renderBulanan();}
+    } catch(err) { showToast('❌ Gagal: '+err.message,'err'); }
+    evt.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
+/* ══ CHARTS ══ */
+const CH = {};
+function kill(id) { if(CH[id]){CH[id].destroy();delete CH[id];} }
+const gc = 'rgba(31,42,62,.6)';   // --border: #1f2a3e
+const tk = { color:'#6b7b9a', font:{family:'-apple-system,system-ui,sans-serif',size:10} };  // --sub
+const lg = { color:'#e8edf8', font:{family:'-apple-system,system-ui,sans-serif',size:11}, padding:12, boxWidth:9, boxHeight:9 }; // --text
+
+/* ══ HERO + SPARKLINE ══ */
+function renderHero() {
+  const s=asc();
+  const emEl=document.getElementById('emptyDash');
+  const dashContent=document.getElementById('dashContent');
+  const heroEl=document.querySelector('.hero');
+  if (!s.length) {
+    if(emEl) emEl.style.display='block';
+    if(dashContent) dashContent.style.display='none';
+    if(heroEl) heroEl.style.display='none';
+    return;
+  }
+  if(emEl) emEl.style.display='none';
+  if(dashContent) dashContent.style.display='block';
+  if(heroEl) heroEl.style.display='block';
+
+  const lat=s[s.length-1], fst=s[0];
+  const lv=totAkhir(lat), fv=totAkhir(fst), gr=lv-fv, re=fv>0?gr/fv*100:0;
+  const cumSetor=s.reduce((a,d)=>a+totTambah(d),0);
+  // Saldo Awal bulan pertama = modal sebelum kontribusi apapun
+  const modalAwal=totAwal(fst);
+  // Hasil Bersih = nilai sekarang − modal awal − semua kontribusi
+  const rb=lv-modalAwal-cumSetor;
+  const yield_=cumSetor>0?rb/cumSetor*100:0;
+
+  document.getElementById('hAmt').textContent   = fRp(lv);
+  document.getElementById('hSub').textContent   = fBul(lat.bulan)+(lat.label?' · '+lat.label:'');
+  document.getElementById('hAwal').textContent  = fRp(fv);
+  document.getElementById('hCount').textContent = s.length+' bulan';
+
+  document.getElementById('hAwalLabel').textContent = 'Awal (' + fBul(fst.bulan, true) + ')';
+
+  const lineEl = document.getElementById('lineChartSub');
+  if (lineEl) lineEl.textContent = fBul(fst.bulan,true)+' → '+fBul(lat.bulan,true);
+
+  const gEl=document.getElementById('hGrowth');
+  gEl.textContent=(gr>=0?'+':'')+fRp(gr,true); gEl.className='hs-val '+(gr>=0?'pos':'neg');
+  const rEl=document.getElementById('hReturn');
+  rEl.textContent=(re>=0?'+':'')+re.toFixed(1)+'%'; rEl.className='hs-val '+(re>=0?'pos':'neg');
+
+  document.getElementById('hSetor').textContent = cumSetor>0?'+'+fRp(cumSetor,true):'Belum dicatat';
+  const rbEl=document.getElementById('hRB');
+  rbEl.textContent=cumSetor>0?(rb>=0?'+':'')+fRp(rb,true):'—'; rbEl.className='rb-val '+(rb>=0?'pos':'neg');
+  const yEl=document.getElementById('hYield');
+  yEl.textContent=cumSetor>0?(yield_>=0?'+':'')+yield_.toFixed(1)+'%':'—';
+  yEl.className='rb-val '+(yield_>=0?'pos':'neg');
+
+}
+
+/* ══ INSTRUMENT CARDS ══ */
+function renderInstCards() {
+  const s=asc(), wrap=document.getElementById('icards');
+  wrap.innerHTML='';
+  if (!s.length) return;
+  const lat=s[s.length-1], prev=s.length>1?s[s.length-2]:null;
+  const lv=totAkhir(lat);
+
+  INST.forEach((inst, idx) => {
+    const v   = lat[inst.dK]||0;
+    const pv  = prev ? (prev[inst.dK]||0) : null;
+    const al  = pct(v, lv);
+    const tVal= lat[inst.dT]||0;
+
+    let momHtml = '';
+    if (pv !== null) {
+      const ch  = v - pv;
+      const chP = pv > 0 ? (ch/pv*100) : (v > 0 ? 100 : 0);
+      if (pv > 0 || v > 0) {
+        momHtml = `<span class="ic-mom" style="color:${ch>=0?'var(--green)':'var(--red)'}">${ch>=0?'▲':'▼'}${Math.abs(chP).toFixed(1)}%</span>`;
+      }
+    }
+    const contribHtml = tVal > 0 ? `<span class="ic-contrib">+${fRp(tVal,true)}</span>` : '<span></span>';
+
+    // Kartu terakhir jika jumlah ganjil → full width
+    const isLast = idx === INST.length - 1;
+    const spanFull = isLast && INST.length % 2 !== 0;
+
+    const c = document.createElement('div');
+    c.className = 'ic';
+    if (spanFull) c.style.gridColumn = '1 / -1';
+    c.style.borderLeft = `3px solid ${inst.color}`;
+    c.innerHTML = `
+      <div class="ic-top">
+        <div class="ic-icon" style="background:${inst.color}18;color:${inst.color}">${inst.svg}</div>
+        <div class="ic-pct">${al}%</div>
+      </div>
+      <div class="ic-name">${inst.name}</div>
+      <div class="ic-val">${fRp(v,true)}</div>
+      <div class="ic-footer">${contribHtml}${momHtml}</div>`;
+    wrap.appendChild(c);
+  });
+}
+
+/* ══ CHARTS ══ */
+function renderCharts() {
+  const s=asc();
+  if (!s.length) return;
+  const lat=s[s.length-1], lv=tot(lat);
+  const labels=s.map(d=>fBul(d.bulan,true));
+
+  kill('donut');
+  document.getElementById('donutSub').textContent=fRp(lv);
+  CH['donut']=new Chart(document.getElementById('cDonut'),{
+    type:'doughnut',
+    data:{
+      labels:INST.map(i=>i.name),
+      datasets:[{data:INST.map(i=>lat[i.dK]||0),backgroundColor:INST.map(i=>i.color),borderWidth:2,borderColor:'#0f1420',hoverOffset:6}]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false, cutout:'62%',
+      plugins:{
+        legend:{
+          position:'bottom',
+          labels:{
+            ...lg,
+            generateLabels: chart => {
+              const ds = chart.data.datasets[0];
+              const total = ds.data.reduce((a,b)=>a+b,0);
+              return chart.data.labels
+                .map((label,i)=>({
+                  text: `${label}  ${total>0?pct(ds.data[i],total)+'%':'0%'}`,
+                  fillStyle: ds.backgroundColor[i],
+                  strokeStyle: ds.backgroundColor[i],
+                  fontColor: '#e8edf8',
+                  hidden: false,
+                  index: i,
+                  _val: ds.data[i],
+                }))
+                .filter(item => item._val > 0); // sembunyikan 0%
+            }
+          }
+        },
+        tooltip:{callbacks:{label:c=>' '+fRp(c.parsed)+' ('+pct(c.parsed,lv)+'%)'}}
+      }
+    }
+  });
+
+  kill('modal');
+  let cm=0;
+  const cumModal=s.map(d=>{cm+=totM(d);return cm;});
+  const cumNilai=s.map(d=>tot(d));
+  const hasCum=cumModal.some(v=>v>0);
+  CH['modal']=new Chart(document.getElementById('cModal'),{
+    type:'line',
+    data:{labels,datasets:[
+      {label:'Nilai Aset',data:cumNilai,borderColor:'#F7931A',backgroundColor:'rgba(247,147,26,.12)',pointBackgroundColor:'#F7931A',pointRadius:4,tension:0.38,fill:true,borderWidth:2},
+      {label:'Total Setor',data:hasCum?cumModal:[],borderColor:'#6b7b9a',backgroundColor:'rgba(107,123,154,.07)',pointBackgroundColor:'#6b7b9a',pointRadius:4,tension:0.38,fill:true,borderWidth:2,borderDash:[5,3]}
+    ]},
+    options:{responsive:true,plugins:{legend:{position:'bottom',labels:lg},tooltip:{callbacks:{label:c=>' '+c.dataset.label+': '+fRp(c.parsed.y)}}},scales:{x:{grid:{color:gc},ticks:tk},y:{grid:{color:gc},ticks:{...tk,callback:v=>fRp(v,true)}}}}
+  });
+
+  kill('line');
+  const ctx2=document.getElementById('cLine').getContext('2d');
+  const g2=ctx2.createLinearGradient(0,0,0,180); g2.addColorStop(0,'rgba(247,147,26,.2)'); g2.addColorStop(1,'rgba(247,147,26,0)');
+  CH['line']=new Chart(ctx2,{
+    type:'line',
+    data:{labels,datasets:[{data:s.map(d=>tot(d)),borderColor:'#F7931A',backgroundColor:g2,pointBackgroundColor:'#F7931A',pointRadius:4,tension:0.38,fill:true,borderWidth:2}]},
+    options:{responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+fRp(c.parsed.y)}}},scales:{x:{grid:{color:gc},ticks:tk},y:{grid:{color:gc},ticks:{...tk,callback:v=>fRp(v,true)}}}}
+  });
+
+  kill('rb');
+  const rbData=s.map((d,i)=>{
+    if(i===0) return totAkhir(d)-totAwal(d)-totTambah(d); // bulan pertama: gain dari modal awal
+    const growth=totAkhir(d)-totAkhir(s[i-1]);
+    return growth-totTambah(d); // pertumbuhan organik (bukan dari dana baru)
+  });
+  CH['rb']=new Chart(document.getElementById('cRB'),{
+    type:'bar',
+    data:{labels,datasets:[{label:'Hasil Bersih',data:rbData,backgroundColor:rbData.map(v=>v>=0?'rgba(39,184,112,.75)':'rgba(224,79,79,.75)'),borderRadius:4}]},
+    options:{responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+fRp(c.parsed.y)}}},scales:{x:{grid:{display:false},ticks:tk},y:{grid:{color:gc},ticks:{...tk,callback:v=>fRp(v,true)}}}}
+  });
+
+  kill('stack');
+  CH['stack']=new Chart(document.getElementById('cStack'),{
+    type:'bar',
+    data:{labels,datasets:INST.map(inst=>({label:inst.name,data:s.map(d=>d[inst.dK]||0),backgroundColor:inst.color+'bb',stack:'a'}))},
+    options:{responsive:true,plugins:{legend:{position:'bottom',labels:lg},tooltip:{callbacks:{label:c=>' '+c.dataset.label+': '+fRp(c.parsed.y)}}},scales:{x:{stacked:true,grid:{display:false},ticks:tk},y:{stacked:true,grid:{color:gc},ticks:{...tk,callback:v=>fRp(v,true)}}}}
+  });
+
+  kill('pct');
+  CH['pct']=new Chart(document.getElementById('cPct'),{
+    type:'line',
+    data:{labels,datasets:INST.map(inst=>({label:inst.name,data:s.map(d=>{const t=totAkhir(d);return t>0?pct(d[inst.dK]||0,t):0;}),borderColor:inst.color,backgroundColor:inst.color+'18',pointBackgroundColor:inst.color,pointRadius:3,tension:0.38,fill:false,borderWidth:2}))},
+    options:{responsive:true,plugins:{legend:{position:'bottom',labels:lg},tooltip:{callbacks:{label:c=>' '+c.dataset.label+': '+c.parsed.y+'%'}}},scales:{x:{grid:{color:gc},ticks:tk},y:{grid:{color:gc},ticks:{...tk,callback:v=>v+'%'}}}}
+  });
+}
+
+function renderDashboard() { renderHero(); renderInstCards(); renderCharts(); }
+
+/* ══ PER BULAN ══ */
+function populateMSel() {
+  const sel=document.getElementById('mSel');
+  const s=asc().reverse();
+  sel.innerHTML=s.map(d=>`<option value="${d.bulan}">${fBul(d.bulan)}${d.label?' — '+d.label:''}</option>`).join('');
+  updateNavBtns();
+}
+
+function renderBulanan() {
+  updateNavBtns();
+  const s=asc(), bul=document.getElementById('mSel').value;
+  const d=db.find(x=>x.bulan===bul), idx=s.findIndex(x=>x.bulan===bul);
+  const prev=idx>0?s[idx-1]:null, out=document.getElementById('mDetail');
+  if (!d) { out.innerHTML=''; return; }
+
+  const tv=totAkhir(d), pv=prev?totAkhir(prev):null;
+  const mom=pv!==null?tv-pv:null, momP=pv&&pv>0?((tv-pv)/pv*100).toFixed(1):null;
+  const setor=totTambah(d), rb=mom!==null?mom-setor:null;
+
+  // ── Summary pills (compact) ──
+  let h=`<div class="dpills">
+    <div class="dp dp-wide">
+      <div class="dp-lbl">Total Nilai</div>
+      <div class="dp-val" style="font-size:20px">${fRp(tv)}</div>
+    </div>`;
+  if (pv!==null) {
+    h+=`<div class="dp"><div class="dp-lbl">Perubahan</div>
+      <div class="dp-val ${mom>=0?'pos':'neg'}" style="font-size:14px">${mom>=0?'+':''}${fRp(mom,true)}</div></div>`;
+    h+=`<div class="dp"><div class="dp-lbl">MoM %</div>
+      <div class="dp-val ${mom>=0?'pos':'neg'}" style="font-size:14px">${momP!==null?(mom>=0?'+':'')+momP+'%':'—'}</div></div>`;
+  }
+  if (setor>0) {
+    h+=`<div class="dp"><div class="dp-lbl">Kontribusi</div>
+      <div class="dp-val neu" style="font-size:14px">+${fRp(setor,true)}</div></div>`;
+  }
+  if (rb!==null && prev) {
+    h+=`<div class="dp"><div class="dp-lbl">Hasil Bersih</div>
+      <div class="dp-val ${rb>=0?'pos':'neg'}" style="font-size:14px">${rb>=0?'+':''}${fRp(rb,true)}</div></div>`;
+  }
+  h+=`</div>`;
+
+  // ── Instrument table (compact grid) ──
+  h+=`<div class="dtw">
+    <div style="display:grid;grid-template-columns:1fr 76px 40px 76px;gap:0 8px;background:var(--s2);padding:7px 12px;border-bottom:1px solid var(--border);">
+      <div style="font-size:9px;color:var(--dim);font-family:var(--fm);text-transform:uppercase;letter-spacing:.07em;">Instrumen</div>
+      <div style="font-size:9px;color:var(--dim);font-family:var(--fm);text-transform:uppercase;letter-spacing:.07em;text-align:right;">Nilai</div>
+      <div style="font-size:9px;color:var(--dim);font-family:var(--fm);text-transform:uppercase;letter-spacing:.07em;text-align:right;">%</div>
+      <div style="font-size:9px;color:var(--dim);font-family:var(--fm);text-transform:uppercase;letter-spacing:.07em;text-align:right;">Hasil</div>
+    </div>`;
+
+  INST.forEach(inst=>{
+    const v   = d[inst.dK]||0;
+    const piv = prev ? (prev[inst.dK]||0) : null;
+    const tval= d[inst.dT]||0;
+    const ch  = piv!==null ? v-piv : null;
+    const hasData = v>0 || (piv!==null && piv>0);
+    const ih  = (ch!==null && hasData) ? ch-tval : null;
+    // "—" kalau null, 0, atau tidak ada data
+    const ihTxt  = (ih===null || ih===0) ? '—' : (ih>=0?'+':'')+fRp(ih,true);
+    const ihColor= ih===null||ih===0 ? 'var(--dim)' : ih>0 ? 'var(--green)' : 'var(--red)';
+    const rowBg  = v===0 ? 'opacity:.45;' : '';
+
+    h+=`<div style="display:grid;grid-template-columns:1fr 76px 40px 76px;gap:0 8px;padding:9px 12px;border-bottom:1px solid var(--border);align-items:center;${rowBg}">
+      <div style="display:flex;align-items:center;gap:7px;min-width:0;">
+        <span style="color:${inst.color};display:flex;align-items:center;flex-shrink:0;">${inst.svg.replace('viewBox','width="14" height="14" viewBox').replace('stroke-width="1.8"','stroke-width="1.8" stroke="currentColor"')}</span>
+        <span style="font-size:12px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${inst.name}</span>
+      </div>
+      <div style="font-size:12px;font-weight:700;font-family:var(--fm);text-align:right;white-space:nowrap;">${fRp(v,true)}</div>
+      <div style="font-size:11px;color:var(--sub);font-family:var(--fm);text-align:right;white-space:nowrap;">${tv>0?pct(v,tv)+'%':'—'}</div>
+      <div style="font-size:11px;font-weight:600;font-family:var(--fm);text-align:right;white-space:nowrap;color:${ihColor};">${ihTxt}</div>
+    </div>`;
+  });
+  h+=`</div>`;
+  out.innerHTML=h;
+}
+
+/* ══ RIWAYAT ══ */
+function renderRiwayat() {
+  renderInstMgr();
+  const s=asc(), emEl=document.getElementById('emptyRiwayat');
+  const list=document.getElementById('rList');
+  document.getElementById('rCount').textContent=s.length+' entri';
+  if (!s.length) { list.innerHTML=''; emEl.style.display='flex'; return; }
+  emEl.style.display='none';
+
+  list.innerHTML=[...s].reverse().map((d)=>{
+    const idx=s.indexOf(d);
+    const tv=totAkhir(d), prev=idx>0?s[idx-1]:null;
+    const mom=prev?tv-totAkhir(prev):null, momP=prev&&totAkhir(prev)>0?((tv-totAkhir(prev))/totAkhir(prev)*100).toFixed(1):null;
+    const setor=totTambah(d), rb=mom!==null?mom-setor:null;
+    const isLatest=idx===s.length-1;
+
+    return `<div class="rv-card ${isLatest?'rv-latest':''}">
+      <div class="rv-top">
+        <div>
+          <div class="rv-bulan">${fBul(d.bulan)}</div>
+          ${d.label?`<div class="rv-label">${d.label}</div>`:''}
+        </div>
+        <div>
+          <div class="rv-total">${fRp(tv,true)}</div>
+          ${mom!==null?`<div class="rv-mom" style="color:${mom>=0?'var(--green)':'var(--red)'}">${mom>=0?'▲':'▼'} ${fRp(Math.abs(mom),true)} (${mom>=0?'+':''}${momP}%)</div>`:'<div class="rv-mom" style="color:var(--dim)">Bulan pertama</div>'}
+        </div>
+      </div>
+      <div class="rv-pills">
+        ${INST.filter(inst=>(d[inst.dK]||0)>0).map(inst=>`
+          <div class="rv-pill">
+            <div class="rv-pill-icon" style="color:${inst.color};display:flex;align-items:center;">${inst.svg.replace('viewBox=','width="12" height="12" viewBox=').replace(/stroke-width="[\d.]+"/,'stroke-width="2" stroke="currentColor"')}</div>
+            <div class="rv-pill-val" style="color:var(--text)">${fRp(d[inst.dK]||0,true)}</div>
+          </div>`).join('') || '<span style="font-size:11px;color:var(--dim)">Belum ada data instrumen</span>'}
+      </div>
+      <div class="rv-bottom">
+        <div class="rv-meta">
+          ${setor>0?`<span>+${fRp(setor,true)} setor</span>`:'<span style="color:var(--dim)">Tanpa kontribusi</span>'}
+          ${rb!==null?`<span style="color:${rb>=0?'var(--green)':'var(--red)'}">✦ ${rb>=0?'+':''}${fRp(rb,true)} hasil</span>`:''}
+        </div>
+        <button class="bdel" onclick="hapusConfirm(this,'${d.bulan}')">hapus</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ══ FORM ══ */
+function fmtInput(el) {
+  const raw = el.value.replace(/[^\d]/g, '');
+  if (!raw) { el.value = ''; updateAkhir(); updatePreview(); return; }
+  el.value = parseInt(raw, 10).toLocaleString('id-ID');
+  updateAkhir();
+  updatePreview();
+}
+function parseInput(id) {
+  const el = document.getElementById(id);
+  if (!el) return 0;
+  const v = (el.value || '').replace(/[^\d]/g, '');
+  return parseInt(v, 10) || 0;
+}
+function setFmt(id, num) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.value = (num && num > 0) ? parseInt(num).toLocaleString('id-ID') : '';
+}
+function fmtDisp(id, num) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = num > 0 ? parseInt(num).toLocaleString('id-ID') : '—';
+}
+
+// Hitung & tampilkan Saldo Akhir = Saldo Awal + Dana Baru
+function updateAkhir() {
+  INST.forEach(inst => {
+    const a = parseInput(inst.fA), t = parseInput(inst.fT);
+    fmtDisp(inst.fK, a + t);
+  });
+}
+
+// Preview total di bawah form
+function updatePreview() {
+  const totalAkhir  = INST.reduce((s,i) => s + parseInput(i.fA) + parseInput(i.fT), 0);
+  const totalTambah = INST.reduce((s,i) => s + parseInput(i.fT), 0);
+  document.getElementById('fPrevSaldo').textContent = 'Rp ' + totalAkhir.toLocaleString('id-ID');
+  const danaEl = document.getElementById('fPrevDana');
+  danaEl.textContent = totalTambah > 0 ? '+Rp ' + totalTambah.toLocaleString('id-ID') : 'Rp 0';
+  danaEl.style.color = totalTambah > 0 ? 'var(--green)' : 'var(--dim)';
+}
+
+function autoFillAwal() {
+  const bulan = document.getElementById('fBulan').value;
+  if (!bulan) return;
+  const s = asc();
+  INST.forEach(inst => document.getElementById('af_'+inst.fA)?.classList.remove('was-autofilled'));
+  const existing = s.find(d => d.bulan === bulan);
+  if (existing) {
+    INST.forEach(inst => { setFmt(inst.fA, existing[inst.dA]); setFmt(inst.fT, existing[inst.dT]); });
+    document.getElementById('fLabel').value = existing.label || '';
+  showToast('✏️ Edit mode','info');
+  } else {
+    const prev = s.filter(d => d.bulan < bulan).pop();
+    if (prev) {
+      INST.forEach(inst => {
+        setFmt(inst.fA, prev[inst.dK]);
+        setFmt(inst.fT, 0);
+        // Tampilkan badge "auto" pada field yang terisi
+        if (prev[inst.dK] > 0) document.getElementById('af_'+inst.fA)?.classList.add('was-autofilled');
+      });
+      showToast('↩ Saldo Awal diisi otomatis dari bulan sebelumnya','info');
+    } else {
+      INST.forEach(inst => { document.getElementById(inst.fA).value=''; document.getElementById(inst.fT).value=''; });
+    }
+  }
+  updateAkhir(); updatePreview();
+}
+
+function resetForm(silent=false) {
+  INST.forEach(inst => {
+    document.getElementById(inst.fA).value='';
+    document.getElementById(inst.fT).value='';
+    fmtDisp(inst.fK, 0);
+    document.getElementById('af_'+inst.fA)?.classList.remove('was-autofilled');
+  });
+  document.getElementById('fLabel').value='';
+  document.getElementById('eInst').classList.remove('show');
+  // Reset tombol Simpan jika masih dalam mode konfirmasi timpa
+  const btnSimpan = document.querySelector('.btn');
+  if (btnSimpan && btnSimpan.dataset.confirmBulan) {
+    btnSimpan.textContent = 'Simpan';
+    btnSimpan.style.background = '';
+    delete btnSimpan.dataset.confirmBulan;
+  }
+  updatePreview();
+  if (!silent) showToast('Form dikosongkan');
+}
+
+function tambah() {
+  const bulan = document.getElementById('fBulan').value;
+  const label = document.getElementById('fLabel').value.trim();
+  let ok = true;
+  if (!bulan) {
+    document.getElementById('eBulan').classList.add('show');
+    document.getElementById('fBulan').classList.add('err');
+    ok = false;
+  } else {
+    document.getElementById('eBulan').classList.remove('show');
+    document.getElementById('fBulan').classList.remove('err');
+  }
+  const allZero = INST.every(inst => parseInput(inst.fA) === 0 && parseInput(inst.fT) === 0);
+  if (allZero) { document.getElementById('eInst').classList.add('show'); ok = false; }
+  else document.getElementById('eInst').classList.remove('show');
+  if (!ok) return;
+
+  const obj = { bulan, label };
+  INST.forEach(inst => {
+    const a = parseInput(inst.fA), t = parseInput(inst.fT);
+    obj[inst.dA] = a;
+    obj[inst.dT] = t;
+    obj[inst.dK] = a + t;
+  });
+
+  const ex = db.findIndex(d => d.bulan === bulan);
+  if (ex >= 0) {
+    // Gunakan two-tap confirm seperti hapus — lebih baik dari native dialog
+    const btnSimpan = document.querySelector('.btn');
+    if (!btnSimpan.dataset.confirmBulan || btnSimpan.dataset.confirmBulan !== bulan) {
+      btnSimpan.dataset.confirmBulan = bulan;
+      btnSimpan.textContent = 'Timpa data?';
+      btnSimpan.style.background = 'var(--red)';
+      setTimeout(() => {
+        btnSimpan.textContent = 'Simpan';
+        btnSimpan.style.background = '';
+        delete btnSimpan.dataset.confirmBulan;
+      }, 2500);
+      showToast('Tap Simpan lagi untuk menimpa data ' + fBul(bulan), 'err');
+      return;
+    }
+    btnSimpan.textContent = 'Simpan';
+    btnSimpan.style.background = '';
+    delete btnSimpan.dataset.confirmBulan;
+    db[ex] = obj;
+  } else {
+    db.push(obj);
+  }
+  save();
+  showToast('✓ Data ' + fBul(bulan) + ' tersimpan!');
+  resetForm(true); // silent — jangan double toast
+  renderDashboard();
+  renderRiwayat();
+  if (document.getElementById('sec-bulanan').classList.contains('active')) { populateMSel(); renderBulanan(); }
+  sw('dashboard', document.getElementById('ntab-dashboard'));
+}
+
+function salinBulanLalu() {
+  const s=asc();
+  if (!s.length) { showToast('Belum ada data untuk disalin','err'); return; }
+  const l=s[s.length-1];
+  INST.forEach(inst => {
+    setFmt(inst.fA, l[inst.dK]); // saldo awal = saldo akhir bulan lalu
+    document.getElementById(inst.fT).value = ''; // dana baru dikosongkan
+    fmtDisp(inst.fK, l[inst.dK]); // saldo akhir = saldo awal (belum ada dana baru)
+    if (l[inst.dK] > 0) document.getElementById('af_'+inst.fA)?.classList.add('was-autofilled');
+  });
+  document.getElementById('fLabel').value = '';
+  updatePreview();
+  showToast('↩ Saldo Awal disalin. Isi Dana Baru jika ada.');
+}
+
+function navBulan(dir) {
+  const sel = document.getElementById('mSel');
+  const idx = sel.selectedIndex;
+  const newIdx = idx - dir; // reversed because list is desc
+  if (newIdx >= 0 && newIdx < sel.options.length) {
+    sel.selectedIndex = newIdx;
+    renderBulanan();
+  }
+}
+
+function updateNavBtns() {
+  const sel = document.getElementById('mSel');
+  if (!sel) return;
+  const prev = document.getElementById('mPrev');
+  const next = document.getElementById('mNext');
+  if (prev) prev.disabled = sel.selectedIndex >= sel.options.length - 1;
+  if (next) next.disabled = sel.selectedIndex <= 0;
+}
+
+let chartsExpanded = false;
+function toggleCharts() {
+  chartsExpanded = !chartsExpanded;
+  const extra = document.getElementById('chartExtra');
+  const toggle = document.getElementById('chartToggle');
+  const lbl = document.getElementById('chartToggleLbl');
+  if (extra) extra.classList.toggle('open', chartsExpanded);
+  if (toggle) toggle.classList.toggle('open', chartsExpanded);
+  if (lbl) lbl.textContent = chartsExpanded ? 'Sembunyikan grafik' : 'Lihat 3 grafik lainnya';
+}
+
+/* ══ INSTRUMENT MANAGER ══ */
+function renderFormInst() {
+  const wrap = document.getElementById('formInstBlocks');
+  if (!wrap) return;
+  wrap.innerHTML = INST.map(inst => `
+    <div class="inst-block" style="border-left:3px solid ${inst.color}">
+      <div class="inst-block-hdr">
+        <div class="inst-block-icon" style="color:${inst.color}">${inst.svg.replace('viewBox=','width="14" height="14" viewBox=')}</div>
+        <span class="inst-block-name" style="color:var(--sub)">${inst.name}</span>
+      </div>
+      <div class="inst-cols">
+        <div class="inst-inputs-row">
+          <div class="inst-field" id="af_${inst.fA}">
+            <label>Saldo Awal</label>
+            <input type="text" inputmode="numeric" id="${inst.fA}" placeholder="0" oninput="fmtInput(this)" onchange="fmtInput(this)">
+            <div class="autofill-badge">↩ auto</div>
+          </div>
+          <div class="inst-op">+</div>
+          <div class="inst-field">
+            <label>Dana Baru</label>
+            <input type="text" inputmode="numeric" id="${inst.fT}" placeholder="0" oninput="fmtInput(this)" onchange="fmtInput(this)">
+          </div>
+        </div>
+        <div class="inst-akhir-row">
+          <span class="inst-akhir-lbl">= Saldo Akhir</span>
+          <div class="inst-akhir-box" id="${inst.fK}">—</div>
+        </div>
+      </div>
+    </div>`).join('');
+  attachFmt();
+}
+
+function renderInstMgr() {
+  const list = document.getElementById('instMgrList');
+  if (!list) return;
+  list.innerHTML = INST.map(inst => `
+    <div class="inst-mgr-row" id="row_${inst.id}">
+      <div class="inst-mgr-icon" style="background:${inst.color}18;color:${inst.color}">
+        ${inst.svg.replace('viewBox=','width="14" height="14" viewBox=')}
+      </div>
+      <div class="inst-mgr-name" style="color:var(--text)">${inst.name}</div>
+      <div style="display:flex;gap:5px;align-items:center;flex-shrink:0;">
+        <button class="inst-mgr-del" onclick="editInstName('${inst.id}')">edit</button>
+        <button class="inst-mgr-del" onclick="deleteInstConfirm(this,'${inst.id}')">hapus</button>
+      </div>
+    </div>`).join('');
+}
+
+function editInstName(id) {
+  const inst = INST.find(i => i.id === id);
+  if (!inst) return;
+  const row = document.getElementById('row_' + id);
+  if (!row) return;
+  const nameDiv = row.querySelector('.inst-mgr-name');
+
+  // Jika sudah dalam mode edit, jangan duplicate
+  if (row.querySelector('.edit-input')) return;
+
+  // Ganti nama div dengan input
+  nameDiv.style.display = 'none';
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'display:flex;align-items:center;gap:5px;flex:1;';
+  wrap.innerHTML = `
+    <input class="edit-input" type="text" value="${inst.name}" maxlength="20"
+      style="flex:1;background:var(--s2);border:1px solid var(--gold);border-radius:8px;color:var(--text);padding:6px 8px;font-size:13px;font-family:var(--f);outline:none;">
+    <button onclick="saveInstName('${id}',this)" style="background:var(--gold);color:#07080c;border:none;border-radius:7px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:var(--f);">✓</button>
+    <button onclick="cancelEditInst('${id}')" style="background:transparent;border:1px solid var(--border);color:var(--dim);border-radius:7px;padding:6px 8px;font-size:11px;cursor:pointer;font-family:var(--f);">✕</button>`;
+
+  nameDiv.after(wrap);
+  wrap.querySelector('.edit-input').focus();
+  wrap.querySelector('.edit-input').select();
+
+  // Enter to save
+  wrap.querySelector('.edit-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') saveInstName(id, wrap.querySelector('button'));
+    if (e.key === 'Escape') cancelEditInst(id);
+  });
+}
+
+function saveInstName(id, btn) {
+  const row = document.getElementById('row_' + id);
+  const input = row?.querySelector('.edit-input');
+  if (!input) return;
+  const newName = input.value.trim();
+  if (!newName) { showToast('Nama tidak boleh kosong','err'); input.focus(); return; }
+  const inst = INST.find(i => i.id === id);
+  if (inst) {
+    inst.name = newName;
+    saveInst();
+    renderInstMgr();
+    renderFormInst();
+    renderDashboard();
+    showToast('✓ Nama disimpan');
+  }
+}
+
+function cancelEditInst(id) {
+  renderInstMgr();
+}
+
+let _delInstTimer = null;
+function deleteInstConfirm(btn, id) {
+  if (btn.classList.contains('confirm')) {
+    clearTimeout(_delInstTimer);
+    deleteInst(id);
+  } else {
+    btn.textContent = 'yakin?';
+    btn.classList.add('confirm');
+    _delInstTimer = setTimeout(() => { btn.textContent='hapus'; btn.classList.remove('confirm'); }, 2500);
+  }
+}
+
+function deleteInst(id) {
+  if (INST.length <= 1) { showToast('Minimal 1 instrumen harus ada','err'); return; }
+  INST = INST.filter(i => i.id !== id);
+  saveInst();
+  renderInstMgr();
+  renderFormInst();
+  renderDashboard();
+  showToast('Instrumen dihapus');
+}
+
+/* Add Instrument Modal */
+let _newColor = COLOR_PRESETS[0];
+let _newIcon  = Object.keys(ICON_PRESETS)[0];
+
+function openAddInst() {
+  _newColor = COLOR_PRESETS[0];
+  _newIcon  = Object.keys(ICON_PRESETS)[0];
+  document.getElementById('newInstName').value = '';
+
+  // Build color swatches
+  document.getElementById('colorGrid').innerHTML = COLOR_PRESETS.map(c =>
+    `<div class="color-swatch${c===_newColor?' sel':''}" style="background:${c}" onclick="pickColor('${c}',this)"></div>`
+  ).join('');
+
+  // Build icon options
+  document.getElementById('iconGrid').innerHTML = Object.entries(ICON_PRESETS).map(([key,svg]) =>
+    `<div class="icon-opt${key===_newIcon?' sel':''}" onclick="pickIcon('${key}',this)">${svg.replace('viewBox=','width="16" height="16" viewBox=')}</div>`
+  ).join('');
+
+  document.getElementById('addInstModal').classList.add('open');
+}
+
+function closeAddInst() { document.getElementById('addInstModal').classList.remove('open'); }
+
+function pickColor(c, el) {
+  _newColor = c;
+  document.querySelectorAll('.color-swatch').forEach(s=>s.classList.remove('sel'));
+  el.classList.add('sel');
+}
+
+function pickIcon(key, el) {
+  _newIcon = key;
+  document.querySelectorAll('.icon-opt').forEach(s=>s.classList.remove('sel'));
+  el.classList.add('sel');
+}
+
+function confirmAddInst() {
+  const name = document.getElementById('newInstName').value.trim();
+  if (!name) { showToast('Nama instrumen wajib diisi','err'); return; }
+  // Generate unique ID
+  let baseId = name.toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,12) || 'inst';
+  let id = baseId;
+  let n = 2;
+  while (INST.find(i => i.id === id)) { id = baseId + n++; }
+
+  const inst = { id, name, color:_newColor, iconKey:_newIcon, svg:ICON_PRESETS[_newIcon], ...mkInst(id) };
+  INST.push(inst);
+  saveInst();
+  closeAddInst();
+  renderInstMgr();
+  renderFormInst();
+  renderDashboard();
+  showToast(`✓ ${name} ditambahkan`);
+}
+
+function attachFmt() {
+  document.querySelectorAll('input[inputmode="numeric"]').forEach(el => {
+    ['input','change','blur'].forEach(ev => el.addEventListener(ev, () => fmtInput(el)));
+  });
+}
+
+/* ✅ FIX: Two-tap delete instead of native confirm() */
+let hapusTimer = null;
+function hapusConfirm(btn, bulan) {
+  if (btn.classList.contains('confirm')) {
+    // Second tap — confirm delete
+    clearTimeout(hapusTimer);
+    hapus(bulan);
+  } else {
+    // First tap — show confirm state
+    btn.textContent = 'yakin?';
+    btn.classList.add('confirm');
+    hapusTimer = setTimeout(() => {
+      btn.textContent = 'hapus';
+      btn.classList.remove('confirm');
+    }, 2500);
+  }
+}
+
+function hapus(bulan) {
+  db=db.filter(d=>d.bulan!==bulan); save();
+  showToast('Data dihapus');
+  renderDashboard(); renderRiwayat();
+  if(document.getElementById('sec-bulanan').classList.contains('active')){populateMSel();renderBulanan();}
+}
+
+let toastT;
+function showToast(msg, type='') {
+  clearTimeout(toastT);
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className='toast'+(type==='err'?' err':type==='info'?' info':'');
+  t.classList.add('show');
+  toastT=setTimeout(()=>t.classList.remove('show'),2800);
+}
+
+function sw(id, el) {
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.ntab').forEach(t=>t.classList.remove('active'));
+  document.querySelector('.fab').classList.remove('active');
+  document.getElementById('sec-'+id).classList.add('active');
+  if (id === 'tambah') {
+    document.querySelector('.fab').classList.add('active');
+    // Auto-fill hanya jika form masih kosong (tidak ganggu data yang sedang diisi)
+    const hasValues = INST.some(i => parseInput(i.fA) > 0 || parseInput(i.fT) > 0);
+    if (!hasValues) autoFillAwal();
+  } else if (el) {
+    el.classList.add('active');
+  }
+  if(id==='dashboard') renderDashboard();
+  if(id==='bulanan')  { populateMSel(); renderBulanan(); }
+  if(id==='riwayat')  renderRiwayat();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+/* ══ PWA SETUP ══ */
+
+// Generate app icon via canvas
+function genIcon(size) {
+  const c = document.createElement('canvas');
+  c.width = c.height = size;
+  const x = c.getContext('2d');
+  const r = size * 0.22;
+  // Background rounded rect
+  x.fillStyle = '#0f1420';
+  x.beginPath();
+  x.moveTo(r,0); x.lineTo(size-r,0); x.quadraticCurveTo(size,0,size,r);
+  x.lineTo(size,size-r); x.quadraticCurveTo(size,size,size-r,size);
+  x.lineTo(r,size); x.quadraticCurveTo(0,size,0,size-r);
+  x.lineTo(0,r); x.quadraticCurveTo(0,0,r,0); x.closePath(); x.fill();
+  // Letter P in orange
+  x.fillStyle = '#F7931A';
+  x.font = `800 ${size*0.54}px -apple-system,system-ui,sans-serif`;
+  x.textAlign = 'center'; x.textBaseline = 'middle';
+  x.fillText('P', size/2, size*0.52);
+  return c.toDataURL('image/png');
+}
+
+function setupPWA() {
+  // Generate icons
+  const icon192 = genIcon(192);
+  const icon512 = genIcon(512);
+
+  // Set favicon
+  const favicon = document.createElement('link');
+  favicon.rel = 'icon'; favicon.type = 'image/png';
+  favicon.href = genIcon(64);
+  document.head.appendChild(favicon);
+
+  // Apple touch icon
+  const apple = document.createElement('link');
+  apple.rel = 'apple-touch-icon'; apple.href = icon192;
+  document.head.appendChild(apple);
+
+  // Web Manifest via Blob
+  const manifest = {
+    name: 'PortoFolio',
+    short_name: 'PortoFolio',
+    description: 'Pencatat portofolio investasi pribadi',
+    start_url: location.href,
+    scope: location.href,
+    display: 'standalone',
+    orientation: 'portrait-primary',
+    background_color: '#07080c',
+    theme_color: '#F7931A',
+    categories: ['finance'],
+    icons: [
+      { src:icon192, sizes:'192x192', type:'image/png', purpose:'any maskable' },
+      { src:icon512, sizes:'512x512', type:'image/png', purpose:'any maskable' },
+    ]
+  };
+  const mBlob = new Blob([JSON.stringify(manifest)], {type:'application/json'});
+  document.getElementById('pwaManifest').href = URL.createObjectURL(mBlob);
+
+  // Service Worker via Blob
+  if ('serviceWorker' in navigator) {
+    const CACHE = 'portofolio-v8';
+    const PAGE  = location.href;
+    const swSrc = `
+const CACHE='${CACHE}', PAGE='${PAGE}';
+const ASSETS=['${PAGE}','https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js'];
+self.addEventListener('install', e=>{
+  self.skipWaiting();
+  e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS).catch(()=>c.add(PAGE))));
+});
+self.addEventListener('activate', e=>{
+  e.waitUntil(
+    caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k))))
+    .then(()=>self.clients.claim())
+  );
+});
+self.addEventListener('fetch', e=>{
+  e.respondWith(
+    caches.match(e.request).then(r=>r||fetch(e.request)
+      .then(res=>{
+        if(res.ok){const clone=res.clone();caches.open(CACHE).then(c=>c.put(e.request,clone));}
+        return res;
+      })
+      .catch(()=>caches.match(PAGE))
+    )
+  );
+});`;
+    const swBlob = new Blob([swSrc], {type:'application/javascript'});
+    const swURL  = URL.createObjectURL(swBlob);
+    navigator.serviceWorker.register(swURL, {scope:'./'})
+      .then(()=>console.log('SW registered'))
+      .catch(e=>console.log('SW failed:',e));
+  }
+}
+
+// Install prompt handling
+let _installPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  _installPrompt = e;
+  const btn = document.getElementById('btnInstall');
+  if (btn) { btn.style.display='flex'; btn.style.color='var(--gold)'; }
+});
+window.addEventListener('appinstalled', () => {
+  _installPrompt = null;
+  const btn = document.getElementById('btnInstall');
+  if (btn) btn.style.display='none';
+  showToast('✓ PortoFolio terpasang!','info');
+});
+
+function installPWA() {
+  if (_installPrompt) {
+    _installPrompt.prompt();
+    _installPrompt.userChoice.then(r => {
+      if (r.outcome==='accepted') showToast('Memasang PortoFolio...','info');
+      _installPrompt = null;
+    });
+  } else {
+    // iOS fallback
+    showToast('Tap Share → Add to Home Screen','info');
+  }
+}
+
+function init() {
+  setupPWA();
+  document.getElementById('hDate').textContent =
+    new Date().toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});
+  document.getElementById('fBulan').value=new Date().toISOString().slice(0,7);
+  load();
+  renderFormInst();
+  renderDashboard();
+  attachFmt();
+  autoFillAwal();
+  updatePreview();
+}
+init();
+</script>
+</body>
+</html>
